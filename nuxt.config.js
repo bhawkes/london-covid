@@ -55,6 +55,7 @@ export default {
     '@nuxtjs/axios',
     // Doc: https://github.com/nuxt/content
     '@nuxt/content',
+    '@nuxt/http',
   ],
   /*
    ** Axios module configuration
