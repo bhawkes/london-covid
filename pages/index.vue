@@ -1,65 +1,61 @@
-<template>
-  <div class="container">
-    <div>
-      <Logo />
-      <h1 class="title">
-        london-covid
-      </h1>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
-        >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
-        >
-          GitHub
-        </a>
-      </div>
-    </div>
-  </div>
+<template lang="pug">
+.page
+  .page__container
+    .page__row
+      .page__col
+        h1 London COVID-19 Visualisation
+    .page__row
+      .page__col
+        LondonMap
+      .page__col
+        h2 Total Days
+        pre {{boroughNameMap}}
+        pre {{boroughsByCode}}
+        pre {{covidata}}
 </template>
 
 <script>
-export default {}
+import _ from 'lodash'
+
+const LIMIT = 5000
+
+export default {
+  async fetch() {
+    this.covidata = await this.$http.$get(
+      // todo: if multiple pages, then load all pages
+      `https://data.london.gov.uk/api/table/s8c9t_j4fs2?$limit=${LIMIT}`
+    )
+  },
+  data() {
+    return {
+      covidata: null,
+    }
+  },
+  computed: {
+    boroughsByCode() {
+      if (!this.covidata) return {}
+      return _.groupBy(this.covidata.rows, (row) => {
+        return row.area_code
+      })
+    },
+    boroughNameMap() {
+      return _.mapValues(this.boroughsByCode, (borough) => {
+        return borough[0].area_name
+      })
+    },
+  },
+}
 </script>
 
-<style>
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
+<style lang="sass" scoped>
+.page__container
+  max-width: 1600px
+  margin: 0 auto
 
-.title {
-  font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
+.page__row
+  display: flex
+  flex-wrap: wrap
 
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
-}
+.page__col
+  width: 50%
 </style>
