@@ -3,23 +3,29 @@
   .page__container(v-show="!$fetchState.pending && !$fetchState.error")
     .page__row
       .page__col
-        h1 London COVID-19 Timeline
+        h1 London COVID-19 Visualisaton
     .page__row
       .page__col
         .u--position_sticky
-          h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days')}}
-          div
-            input(type="radio" id="new" :value="false" v-model="cumulative")
-            label(for="new") New cases
-            input(type="radio" id="total" :value="true" v-model="cumulative")
-            label(for="total") Total cases
           .controls
-            .controls__range-wrapper
-              input(type="range", v-model.number="offsetDate", min="0", :max="totalDays", @focus="handleStop()").u--w_100.controls__range
-            .controls_buttons-wrapper
-              button(@click="offsetDate = 0").controls_button &lt;
-              button(@click="handleToggle()").controls_button {{playingState ? 'pause' : 'play'}}
-              button(@click="offsetDate = totalDays").controls_button &gt;
+            .controls__section
+              h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days')}}
+            .controls__section
+              .controls__toggle
+                div
+                  input(type="radio" id="new" :value="false" v-model="cumulative")
+                  label(for="new") New cases
+                div
+                  input(type="radio" id="total" :value="true" v-model="cumulative")
+                  label(for="total") Total cases
+            .controls__section
+              .controls__range-wrapper
+                input(type="range", v-model.number="offsetDate", min="0", :max="totalDays", @focus="handleStop()").u--w_100.controls__range
+            .controls__section
+              .controls_buttons-wrapper
+                button(@click="offsetDate = 0").controls_button ⏮️
+                button(@click="handleToggle()").controls_button {{playingState ? '⏸️' : '▶️'}}
+                button(@click="offsetDate = totalDays").controls_button ⏭️
           div(@click="$store.commit('clearArea')")
             LondonMap(ref="map")
       .page__col
@@ -84,6 +90,7 @@ import _ from 'lodash' // todo: load specific functions
 import dayjs from 'dayjs'
 import * as d3 from 'd3' // todo: load specific functions
 
+// API limit is 5000 rows
 const LIMIT = 5000
 
 export default {
@@ -104,6 +111,7 @@ export default {
       rows: [...request1.rows, ...request2.rows],
     }
 
+    // set some values
     this.fromDate = dayjs(this.apiResponse.rows[0].date)
     this.toDate = dayjs(
       this.apiResponse.rows[this.apiResponse.rows.length - 1].date
@@ -145,12 +153,14 @@ export default {
     }
   },
   computed: {
+    // returns object, keyed by areaCode
     boroughsByCode() {
       if (!this.apiResponse) return {}
       return _.groupBy(this.apiResponse.rows, (row) => {
         return row.area_code
       })
     },
+    // returns array, sorted
     boroughsBySort() {
       return Object.entries(this.boroughsByCode)
         .map((entry) => {
@@ -176,16 +186,19 @@ export default {
           }
         })
     },
+    // object of areaCode:areaName
     boroughNameMap() {
       return _.mapValues(this.boroughsByCode, (borough) => {
         return borough[0].area_name
       })
     },
+    // returns total days as int
     totalDays() {
       return this.toDate && this.fromDate
         ? dayjs(this.toDate).diff(this.fromDate, 'days')
         : 0
     },
+    // adds up all the daily new cases
     dailyNewest() {
       return this.boroughsBySort.length
         ? this.boroughsBySort.reduce((total, borough) => {
@@ -193,6 +206,7 @@ export default {
           }, 0)
         : 0
     },
+    // adds up all the daily total cases
     dailyTotal() {
       return this.boroughsBySort.length
         ? this.boroughsBySort.reduce((total, borough) => {
@@ -284,19 +298,22 @@ export default {
   transition: transform 0.25s ease
 
 .page__container
-  width: calc(100% - 100px)
+  width: calc(100% - 30px)
   max-width: 1600px
   margin: 0 auto
+  @media (min-width: 1024px)
+    width: calc(100% - 100px)
 
 .page__row
   display: flex
   flex-wrap: wrap
 
 .page__col
-  padding: 0 25px
+  padding: 0 10px
   width: 100%
-  @media (min-width: 1200px)
+  @media (min-width: 1024px)
     width: 50%
+    padding: 0 25px
 
 .u--h_100
   height: 100%
@@ -306,7 +323,7 @@ export default {
 
 .u--position_sticky
   position: sticky
-  top: 0
+  top: 1em
 
 .u--align_center
   text-align: center
@@ -323,19 +340,29 @@ export default {
   letter-spacing: 0.05em
 
 
-.controls
+// .controls
+
+.controls__section
+  margin-bottom: 1em
+
+.controls__toggle
+  display: flex
+  justify-content: space-around
 
 .controls__range-wrapper
 
-.controls__range
+// .controls__range
 
 .controls_buttons-wrapper
   display: flex
   justify-content: space-between
 
 .controls_button
+  appearance: none
   display: block
   font-size: 2em
+  border: none
+  background: none
 
 
 

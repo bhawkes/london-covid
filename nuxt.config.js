@@ -23,6 +23,9 @@ export default {
   css: [],
   plugins: ['~/plugins/vtooltip'],
   components: true,
-  buildModules: ['@nuxtjs/eslint-module'],
+  buildModules: [
+    '@nuxtjs/eslint-module',
+    ['@nuxtjs/vuetify', { treeShake: true }],
+  ],
   modules: ['@nuxt/http', 'portal-vue/nuxt'],
 }

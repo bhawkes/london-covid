@@ -1,4 +1,4 @@
-# london-covid
+# London COVID-19 Visualisation
 
 ## Build Setup
 
