@@ -4,63 +4,92 @@
     .page__row
       .page__col
         h1 London COVID-19 Visualisaton
+    hr
     .page__row
       .page__col
         .u--position_sticky
           .controls
             .controls__section
-              h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days')}}
-            .controls__section
-              .controls__toggle
-                div
-                  input(type="radio" id="new" :value="false" v-model="cumulative")
-                  label(for="new") New cases
-                div
-                  input(type="radio" id="total" :value="true" v-model="cumulative")
-                  label(for="total") Total cases
+              h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days').format('dddd	Do MMMM YYYY')}}
+                br
+                sub(v-if="fromDate") {{fromDate.add(offsetDate, 'days').format('DD-MM-YYYY')}}
+          
             .controls__section
               .controls__range-wrapper
                 input(type="range", v-model.number="offsetDate", min="0", :max="totalDays", @focus="handleStop()").u--w_100.controls__range
             .controls__section
-              .controls_buttons-wrapper
-                button(@click="offsetDate = 0").controls_button ⏮️
-                button(@click="handleToggle()").controls_button {{playingState ? '⏸️' : '▶️'}}
-                button(@click="offsetDate = totalDays").controls_button ⏭️
+              .controls__buttons-wrapper
+                button(@click="offsetDate = 0" :disabled="offsetDate===0").controls__button ⏮️
+                button(@click="offsetDate -=1", :disabled="offsetDate===0").controls__button ⏪
+                button(@click="handleToggle()").controls__button {{playingState ? '⏸️' : '▶️'}}
+                button(@click="offsetDate += 1" :disabled="offsetDate===totalDays").controls__button ⏩
+                button(@click="offsetDate = totalDays" :disabled="offsetDate===totalDays").controls__button ⏭️
+          hr
           div(@click="$store.commit('clearArea')")
             LondonMap(ref="map")
       .page__col
         div
           h2 Introduction
           p Data sourced from <a href="https://data.london.gov.uk/dataset/coronavirus--covid-19--cases">London Datastore</a>
-          p Statically generated site using NuxtJS, d3
-        
+          p Please note that figures from recent few days may be incomplete.
+        hr
         div
-          h2 Table
+          h2 Controls
+        .controls
+          .controls__section
+            
+            .controls__toggle
+              .t--small Highlight on map:
+              div
+                input(type="radio" id="new" :value="false" v-model="cumulative")
+                label(for="new") New cases
+              div
+                input(type="radio" id="total" :value="true" v-model="cumulative")
+                label(for="total") Total cases
+          .controls__section
+            
+            .controls__speed-wrapper
+              .t--small Speed:
+              div
+                input(type="radio" id="speed1" :value="1000" v-model="playSpeed")
+                label(for="speed1") Slow
+              div
+                input(type="radio" id="speed2" :value="500" v-model="playSpeed")
+                label(for="speed2") Normal
+              div
+                input(type="radio" id="speed3" :value="100" v-model="playSpeed")
+                label(for="speed3") Fast
+        hr
+        div
+          h2 Statistics
           div
             table.u--w_100
               thead
                 tr
                   th.u--align_left
-                    button(@click="sortBy='name'", :disabled="sortBy==='name'") Sort
                     h3 Borough
+                    button(@click="sortBy='name'", :disabled="sortBy==='name'") Sort
+                    
                     
                   th.u--align_center
-                    button(@click="sortBy='new';cumulative=false",:disabled="sortBy==='new'") Sort
                     h3 New Cases
+                    button(@click="sortBy='new';cumulative=false",:disabled="sortBy==='new'") Sort
+                    
                 
                   th.u--align_center
-                    button(@click="sortBy='total';cumulative=true",:disabled="sortBy==='total'") Sort
                     h3 Total Cases
+                    button(@click="sortBy='total';cumulative=true",:disabled="sortBy==='total'") Sort
+                    
                     
                 tr
                   td
                     h4 All London
                   td.u--align_center
                     .t--large {{dailyNewest}}
-                    .t--small new cases
+                    .t--small New cases
                   td.u--align_center
                     .t--large {{dailyTotal}}
-                    .t--small total cases
+                    .t--small Total cases
 
               TransitionGroup(name="flip-list" tag="tbody")
                 tr(v-for="borough in boroughsBySort", :key="borough.areaCode", @click.stop="$store.commit('setArea', borough.areaCode)", :class="{'is-selected': $store.state.selectedArea === borough.areaCode}" :id="borough.areaCode")
@@ -68,10 +97,10 @@
                     h4 {{borough.rows[offsetDate].area_name}}
                   td.u--align_center
                     .t--large {{borough.rows[offsetDate].new_cases}}
-                    .t--small new cases
+                    .t--small New cases
                   td.u--align_center
                     .t--large {{borough.rows[offsetDate].total_cases}}
-                    .t--small total cases
+                    .t--small Total cases
   .page__container(v-if="$fetchState.pending")
     .page__row
       .page__col
@@ -88,10 +117,13 @@
 <script>
 import _ from 'lodash' // todo: load specific functions
 import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
 import * as d3 from 'd3' // todo: load specific functions
 
 // API limit is 5000 rows
 const LIMIT = 5000
+
+dayjs.extend(advancedFormat)
 
 export default {
   // run api calls client side.
@@ -150,6 +182,7 @@ export default {
       sortBy: 'name',
       highestNewest: 0,
       highestTotal: 0,
+      playSpeed: 500,
     }
   },
   computed: {
@@ -228,6 +261,12 @@ export default {
         .querySelector(`#${this.$store.state.selectedArea}`)
         .scrollIntoView({ behaviour: 'smooth', block: 'center' })
     },
+    playSpeed() {
+      if (this.playingState) {
+        this.handleStop()
+        this.handleToggle()
+      }
+    },
   },
   mounted() {},
   methods: {
@@ -280,7 +319,7 @@ export default {
             this.offsetDate = this.totalDays
             this.handleStop()
           }
-        }, 1000)
+        }, this.playSpeed)
       } else {
         this.handleStop()
       }
@@ -298,7 +337,7 @@ export default {
   transition: transform 0.25s ease
 
 .page__container
-  width: calc(100% - 30px)
+  width: calc(100% - 20px)
   max-width: 1600px
   margin: 0 auto
   @media (min-width: 1024px)
@@ -347,22 +386,30 @@ export default {
 
 .controls__toggle
   display: flex
-  justify-content: space-around
+  justify-content: space-between
 
-.controls__range-wrapper
+// .controls__range-wrapper
 
 // .controls__range
 
-.controls_buttons-wrapper
+.controls__buttons-wrapper
   display: flex
   justify-content: space-between
+  align-items: center
 
-.controls_button
+.controls__speed-wrapper
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.controls__button
   appearance: none
   display: block
   font-size: 2em
   border: none
   background: none
+  &:focus
+    outline: none
 
 
 
@@ -373,7 +420,7 @@ table
   border-collapse: collapse
 
 thead
-  background: #dddddd
+  // background: #dddddd
   td
     position: sticky
     top: 0
@@ -399,7 +446,7 @@ th, td
 
 th
   h3
-    // margin: 0
+    margin-top: 0
   button
     display: block
     width: 100%

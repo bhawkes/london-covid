@@ -25,7 +25,7 @@ export default {
   components: true,
   buildModules: [
     '@nuxtjs/eslint-module',
-    ['@nuxtjs/vuetify', { treeShake: true }],
+    // ['@nuxtjs/vuetify', { treeShake: true }],
   ],
   modules: ['@nuxt/http', 'portal-vue/nuxt'],
 }
