@@ -10,7 +10,7 @@
         .u--position_sticky
           .controls
             .controls__section
-              h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days').format('dddd	Do MMMM YYYY')}}
+              h2(v-if="fromDate") {{fromDate.add(offsetDate, 'days').format('dddd	Do MMMM')}}
                 br
                 sub(v-if="fromDate") {{fromDate.add(offsetDate, 'days').format('DD-MM-YYYY')}}
           
