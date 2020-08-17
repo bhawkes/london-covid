@@ -31,7 +31,7 @@
         div
           h2 Introduction
           p Data sourced from <a href="https://data.london.gov.uk/dataset/coronavirus--covid-19--cases">London Datastore</a>
-          p Please note that figures from recent few days may be incomplete.
+          p Please note that figures from the last few days may be incomplete.
         hr
         div
           h2 Controls
